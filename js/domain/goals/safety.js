@@ -35,12 +35,10 @@
     const cardio = asm ? asm.cardio.score : 1;
     let hint = null;
 
-    if (lim.medicalClearance) add('medical', 'danger', 'По ответам анкеты перед нагрузками нужна консультация врача. Цель можно задать, но план будет щадящим, пока вы не подтвердите допуск.');
-
     if (type === 'weight_loss') {
       const start = Number(p.start_value) || weight;
       const target = Number(p.target_value);
-      if (lim.noWeightLoss) add('no_loss', 'block', 'Снижение веса сейчас недоступно (недовес, беременность или послеродовой период). Выберите другую цель.');
+      if (lim.noWeightLoss) add('no_loss', 'block', 'Снижение веса сейчас недоступно: ИМТ ниже нормы. Выберите другую цель.');
       if (target && start && target >= start) add('bad_dir', 'block', 'Целевой вес должен быть меньше стартового.');
       if (target && height) {
         const bmiT = target / Math.pow(height / 100, 2);
@@ -60,8 +58,6 @@
           if (pct > 0.75 && (lvl <= 1 || (height && weight && weight / Math.pow(height / 100, 2) >= 35))) add('pace_unfit', 'warn', 'При низкой подготовке или ИМТ от 35 начинайте с темпа около 0,5% в неделю: нагрузку на суставы и сердце нужно наращивать постепенно.');
         } else add('no_deadline', 'info', `Без дедлайна безопасный темп — около ${num(hint.safePace, 2)} кг/нед, примерно до ${D.short(hint.safeDate, true)}.`);
         if (total / start > 0.2 && (!weeks || weeks < 26)) add('big_loss', 'warn', `Снижение больше 20% веса быстрее чем за полгода — тяжёлая цель. Рассмотрите промежуточный рубеж.`);
-        // Хватит ли калорий: безопасный дефицит не больше 20% расхода
-        if (weeks && lim.gentle) add('gentle', 'info', 'Из-за ограничений по здоровью темп снижения веса лучше сделать мягче.');
       }
     }
 
@@ -97,7 +93,6 @@
         const heavy = ex && ['squat', 'hinge'].includes(ex.pattern) ? 2 : 1.5;
         if (ratio > heavy && lvl <= 2) add('lift_ratio', 'warn', `Цель — ${num(ratio, 1)} веса тела: для вашей подготовки это очень много. Лучше ставить рубежи по этапам.`);
       }
-      if (lim.noMaxEfforts) add('no_max', 'info', 'Из-за ограничений по здоровью в плане не будет предельных усилий: рабочий вес растёт через повторы.');
     }
 
     if (type === 'race') {

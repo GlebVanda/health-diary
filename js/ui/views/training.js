@@ -20,8 +20,9 @@
 
   function sessionRow(ctx, s) {
     const log = HD.svc.logFor(ctx, s.id);
-    const state = log ? (log.done ? '<span class="badge good">выполнено</span>' : '<span class="badge danger">пропуск</span>') : s.date < ctx.today ? '<span class="badge warn">не отмечено</span>' : '';
-    return `<li><a class="li-link session ${log && log.done ? 'done' : ''}" href="#/training/s/${s.id}">
+    const can = HD.svc.workout.isStartable(ctx, s);
+    const state = log ? (log.done ? '<span class="badge good">выполнено</span>' : '<span class="badge danger">пропуск</span>') : can ? '<span class="badge accent">начать</span>' : s.date < ctx.today ? '<span class="badge warn">не отмечено</span>' : '';
+    return `<li><a class="li-link session ${log && log.done ? 'done' : ''}" href="${can || log ? '#/workout/' : '#/training/s/'}${s.id}">
       <div class="kind ${s.kind}">${ui.kindIcon(s.kind)}</div>
       <div class="grow"><b>${esc(s.title)}</b> ${s.is_deload ? '<span class="badge info">разгрузка</span>' : ''}
         <div class="small muted">${D.WEEKDAYS[D.dow(s.date)]}, ${D.short(s.date)} · ${s.effective_duration || '—'} мин${s.target.format ? ' · ' + (s.target.format === 'continuous' ? 'непрерывно' : s.target.format) : ''}${s.target.incline ? ' · наклон/рельеф' : ''}</div>
@@ -97,8 +98,9 @@
           .join('')}</table><div class="tiny muted" style="margin-top:6px">Вес растёт на 2,5 кг (штанга) или 1 кг (гантели), когда прошлая такая же тренировка прошла с самочувствием ≥ 6.</div>` : ''}
         ${winter ? `<button class="btn block" style="margin-top:12px" data-act="treadmill">${s.moved_to_treadmill ? 'Вернуть на улицу' : '❄ Перенести на дорожку (гололёд, мороз)'}</button>` : ''}
       </section>
+      ${HD.svc.workout.isStartable(ctx, s) || (!log.id && HD.svc.workout.loadDraft(s.id)) ? `<a class="btn primary block" style="margin-top:12px" href="#/workout/${s.id}">Начать тренировку</a>` : log.done ? `<a class="btn block" style="margin-top:12px" href="#/workout/${s.id}">Итоги тренировки</a>` : ''}
       <form class="card stack" style="margin-top:12px" data-form="log">
-        <h2>Отметка</h2>
+        <h2>Ручная отметка</h2>
         <div class="seg"><button type="button" data-done="1" class="${done ? 'on' : ''}">Выполнено</button><button type="button" data-done="0" class="${!done ? 'on' : ''}">Не выполнено</button></div>
         <input type="hidden" name="done" value="${done ? '1' : '0'}">
         <div class="grid2">
@@ -108,7 +110,6 @@
         <label class="field"><span>Самочувствие: <b data-wb>${wb}</b> из 10</span><input type="range" min="1" max="10" name="wellbeing" value="${wb}"></label>
         ${keyLift ? ui.field('Рабочий вес: ' + keyLift.name, ui.numInput('key_lift_kg', log.key_lift_kg, 'кг')) : ''}
         ${ui.field('Заметка', `<input class="input" name="note" value="${esc(log.note || '')}">`)}
-        <div class="tiny muted">При боли или травме пропусти нагрузку и обратись к врачу, если не проходит.</div>
         <button class="btn primary block">Сохранить отметку</button>
         ${log.id ? '<button type="button" class="btn ghost danger block" data-act="del-log">Удалить отметку</button>' : ''}
       </form>`;

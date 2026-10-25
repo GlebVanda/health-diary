@@ -185,7 +185,7 @@
       await setup();
       use(A);
       const p = HD.svc.onboarding.create('Алекс');
-      HD.svc.onboarding.saveAssessment(p.id, { name: 'Алекс', sex: 'm', birth_date: '1990-01-01', height_cm: 180, weight_kg: 90, heart: 'no', chest_pain: 'no', dizzy: 'no', bp: 'no', diabetes: 'no', joints: 'no', surgery: 'no' });
+      HD.svc.onboarding.saveAssessment(p.id, { name: 'Алекс', sex: 'm', birth_date: '1990-01-01', height_cm: 180, weight_kg: 90 });
       HD.svc.nutrition.saveFood(p.id, '2026-10-20', { kcal: 2000 });
       const r = await HD.sync.syncNow();
       expect(r.pushed > 3).toBeTruthy();

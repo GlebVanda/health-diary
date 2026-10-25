@@ -233,6 +233,11 @@
       note: data.note || null,
       source: data.source || 'manual',
     };
+    // Тренировка, пройденная по шагам: упражнения с весами и ощущениями, общее ощущение, время начала и конца
+    if (data.exercises) row.exercises = data.exercises;
+    if (data.feel) row.feel = data.feel;
+    if (data.started_at) row.started_at = data.started_at;
+    if (data.finished_at) row.finished_at = data.finished_at;
     let log;
     if (data.id) log = db.update('session_logs', data.id, row);
     else if (row.planned_session_id) log = db.upsert('session_logs', (l) => l.profile_id === profileId && l.planned_session_id === row.planned_session_id, row).row;

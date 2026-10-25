@@ -1,7 +1,8 @@
 // Оценка физической подготовки и здоровья по анкете.
 // «Уровень подготовки» одной цифрой трактуется по-разному, поэтому считаем отдельно выносливость и силу
-// по наблюдаемым фактам (сколько бежите без остановки, сколько отжиманий, стаж, перерыв), а здоровье —
-// по адаптированному опроснику PAR-Q. Результат: уровни 0–4, ИМТ, флаги ограничений и стартовые данные для плана.
+// по наблюдаемым фактам (сколько бежите без остановки, сколько отжиманий, стаж, перерыв).
+// Результат: уровни 0–4, ИМТ, ограничения (без ударной нагрузки, недовес) и стартовые данные для плана.
+// Медицинских вопросов и рекомендаций врача в анкете нет: приложение личное.
 (function (HD) {
   const D = HD.dates;
   const { clamp } = HD.util;
@@ -43,6 +44,7 @@
         { key: 'steps', label: 'Сколько ходите в обычный день', type: 'select', options: [['lt5', 'Меньше 5 000 шагов'], ['5to10', '5 000–10 000'], ['gt10', 'Больше 10 000']], required: true },
         { key: 'sleep_h', label: 'Сон в среднем', type: 'number', unit: 'ч' },
         { key: 'regular', label: 'Сколько вы уже тренируетесь регулярно (2+ раза в неделю)', type: 'select', options: [['none', 'Не тренируюсь'], ['lt3', 'Меньше 3 месяцев'], ['3to12', '3–12 месяцев'], ['gt12', 'Больше года']], required: true },
+        { key: 'joints_issue', label: 'Бег и прыжки лучше исключить (суставы, спина или старая травма)', type: 'checkbox' },
         { key: 'last', label: 'Когда была последняя регулярная неделя тренировок', type: 'select', options: [['now', 'Тренируюсь сейчас'], ['1m', '1–4 недели назад'], ['3m', '1–3 месяца назад'], ['1y', '3–12 месяцев назад'], ['more', 'Больше года назад или никогда']], required: true },
       ],
     },
@@ -69,22 +71,6 @@
         { key: 'squats', label: 'Приседания с весом тела за 1 минуту', type: 'number', unit: 'раз' },
         { key: 'plank_sec', label: 'Планка на прямых руках', type: 'number', unit: 'с' },
         { key: 'lifts', label: 'Рабочие веса на 8–10 повторов, если знаете', type: 'lifts' },
-      ],
-    },
-    {
-      key: 'health',
-      title: 'Здоровье',
-      hint: 'Это не диагноз: ответы нужны, чтобы не дать опасную нагрузку. Данные остаются на устройстве.',
-      questions: [
-        { key: 'heart', label: 'Врач говорил о проблемах с сердцем?', type: 'yesno', required: true },
-        { key: 'chest_pain', label: 'Бывает боль в груди при нагрузке?', type: 'yesno', required: true },
-        { key: 'dizzy', label: 'Бывают головокружения или потеря сознания?', type: 'yesno', required: true },
-        { key: 'bp', label: 'Давление выше 140/90 или принимаете лекарства от давления?', type: 'yesno', required: true },
-        { key: 'diabetes', label: 'Диабет или другие хронические заболевания?', type: 'yesno', required: true },
-        { key: 'joints', label: 'Боли в суставах или спине, которые мешают двигаться?', type: 'yesno', required: true },
-        { key: 'surgery', label: 'Операция или серьёзная травма за последние 6 месяцев?', type: 'yesno', required: true },
-        { key: 'pregnancy', label: 'Беременность или до 6 месяцев после родов?', type: 'yesno', onlySex: 'f', required: true },
-        { key: 'health_note', label: 'Что ещё важно учесть (необязательно)', type: 'text' },
       ],
     },
   ];
@@ -184,32 +170,16 @@
     const strength = strengthScore(a, a.sex, weight);
     const overall = Math.floor((cardio + strength) / 2 + 0.25);
     const flags = [];
-    const limits = { gentle: false, lowImpact: false, noMaxEfforts: false, noWeightLoss: false, medicalClearance: false };
+    const limits = { gentle: false, lowImpact: false, noMaxEfforts: false, noWeightLoss: false };
     const flag = (key, severity, text) => flags.push({ key, severity, text });
 
-    if (a.heart === 'yes' || a.chest_pain === 'yes' || a.dizzy === 'yes') {
-      limits.medicalClearance = limits.gentle = limits.noMaxEfforts = true;
-      flag('medical', 'danger', 'Перед тренировками нужна консультация врача (кардиолога/терапевта). До неё план будет щадящим: умеренный пульс, без интервалов и максимальных весов.');
-    }
-    if (a.bp === 'yes' || a.diabetes === 'yes') {
-      limits.noMaxEfforts = true;
-      flag('medical_watch', 'warn', 'Согласуйте нагрузку с врачом. В плане не будет максимальных усилий и задержки дыхания; следите за самочувствием на каждой тренировке.');
-    }
-    if (a.joints === 'yes') {
+    if (a.joints_issue) {
       limits.lowImpact = true;
-      flag('joints', 'warn', 'Боли в суставах/спине: на старте бег и прыжки заменим ходьбой с наклоном и велотренажёром. Если боль усиливается — обратитесь к врачу.');
-    }
-    if (a.surgery === 'yes') {
-      limits.gentle = true;
-      flag('surgery', 'warn', 'Недавняя операция или травма: нужна отмашка врача, нагрузку повышаем медленно.');
-    }
-    if (a.sex === 'f' && a.pregnancy === 'yes') {
-      limits.gentle = limits.noMaxEfforts = limits.noWeightLoss = limits.medicalClearance = true;
-      flag('pregnancy', 'danger', 'Беременность или послеродовой период: нужен план, согласованный с врачом. Цели на снижение веса не ставим.');
+      flag('joints', 'info', 'Бег и прыжки на старте заменим ходьбой с наклоном и велотренажёром.');
     }
     if (bmi != null && bmi >= 35) {
       limits.lowImpact = true;
-      flag('bmi_high', 'warn', `ИМТ ${bmi.toFixed(1)}: высокая ударная нагрузка на суставы. Начнём с ходьбы, ходьбы в наклон и силовых; бег — позже. Перед стартом желателен чек-ап у терапевта.`);
+      flag('bmi_high', 'warn', `ИМТ ${bmi.toFixed(1)}: высокая ударная нагрузка на суставы. Начнём с ходьбы, ходьбы в наклон и силовых; бег — позже.`);
     } else if (bmi != null && bmi >= 30) {
       if (cardio < 2) limits.lowImpact = true;
       flag('bmi_over', 'info', `ИМТ ${bmi.toFixed(1)}: бег вводим постепенно, после ходьбы и бег-ходьбы.`);
@@ -218,9 +188,6 @@
       flag('bmi_under', 'warn', `ИМТ ${bmi.toFixed(1)} ниже нормы: снижать вес нельзя, в приоритете питание и сила.`);
     }
     if (cardio === 0) limits.lowImpact = true;
-    if (age != null && ((a.sex === 'm' && age >= 45) || (a.sex === 'f' && age >= 55)) && overall <= 1) {
-      flag('age_checkup', 'info', 'Перед ростом нагрузок стоит пройти чек-ап: ЭКГ, давление, анализ крови.');
-    }
     if (a.sleep_h && Number(a.sleep_h) < 6) flag('sleep', 'info', 'Сон меньше 6 часов замедляет восстановление: прогрессия будет осторожнее.');
 
     const lifts = {};

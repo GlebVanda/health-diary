@@ -10,7 +10,6 @@
     name: 'Тест', sex: 'm', birth_date: '1990-01-01', height_cm: 180, weight_kg: 90,
     work: 'sedentary', steps: '5to10', sleep_h: 7, regular: '3to12', last: 'now',
     walk30: 'yes', stairs: 'easy', run: '15to30', experience: '6to24m', pushups: 20, squats: 30, plank_sec: 90,
-    heart: 'no', chest_pain: 'no', dizzy: 'no', bp: 'no', diabetes: 'no', joints: 'no', surgery: 'no',
   };
   const zero = Object.assign({}, base, { regular: 'none', last: 'more', run: 'cant', walk30: 'no', stairs: 'stops', experience: 'never', pushups: 0, squats: 5, plank_sec: 10 });
   const athlete = Object.assign({}, base, { regular: 'gt12', run: 'gt60', experience: 'gt2y', pushups: 50, squats: 50, plank_sec: 200, lifts: { squat_bb: 160 } });
@@ -41,31 +40,29 @@
       expect(r.bmiClass.key).toBe('over');
       expect(F.assess(Object.assign({}, base, { weight_kg: 120 }), TODAY).bmiClass.key).toBe('obese2');
     });
-    it('сердце, боль в груди, головокружения → нужна консультация врача и щадящий режим', () => {
-      for (const k of ['heart', 'chest_pain', 'dizzy']) {
-        const r = F.assess(Object.assign({}, base, { [k]: 'yes' }), TODAY);
-        expect(r.limits.medicalClearance).toBeTruthy();
-        expect(r.limits.gentle).toBeTruthy();
-        expect(r.limits.noMaxEfforts).toBeTruthy();
-        expect(r.flags.some((f) => f.severity === 'danger')).toBeTruthy();
-      }
+    it('в анкете нет медицинских вопросов и рекомендаций врача', () => {
+      expect(F.SECTIONS.map((x) => x.key)).toEqual(['about', 'lifestyle', 'cardio', 'strength']);
+      const r = F.assess(Object.assign({}, base, { weight_kg: 125 }), TODAY);
+      expect(r.flags.every((f) => !/врач|терапевт|чек-ап|медицин/i.test(f.text))).toBeTruthy();
+      expect(r.limits.medicalClearance).toBe(undefined);
     });
-    it('суставы → без ударной нагрузки; недавняя операция → щадящий режим', () => {
-      expect(F.assess(Object.assign({}, base, { joints: 'yes' }), TODAY).limits.lowImpact).toBeTruthy();
-      expect(F.assess(Object.assign({}, base, { surgery: 'yes' }), TODAY).limits.gentle).toBeTruthy();
+    it('«бег и прыжки лучше исключить» → без ударной нагрузки', () => {
+      expect(F.assess(Object.assign({}, base, { joints_issue: true }), TODAY).limits.lowImpact).toBeTruthy();
+      expect(F.assess(base, TODAY).limits.lowImpact).toBeFalsy();
     });
-    it('ИМТ от 35 → без бега на старте; недовес → нельзя снижать вес; беременность → снижение веса недоступно', () => {
+    it('ИМТ от 35 → без бега на старте; недовес → нельзя снижать вес', () => {
       expect(F.assess(Object.assign({}, base, { weight_kg: 125 }), TODAY).limits.lowImpact).toBeTruthy();
       expect(F.assess(Object.assign({}, base, { weight_kg: 55 }), TODAY).limits.noWeightLoss).toBeTruthy();
-      const p = F.assess(Object.assign({}, base, { sex: 'f', pregnancy: 'yes' }), TODAY);
-      expect(p.limits.noWeightLoss).toBeTruthy();
-      expect(p.limits.medicalClearance).toBeTruthy();
+    });
+    it('старые ответы о здоровье (из прежних версий анкеты) игнорируются', () => {
+      const r = F.assess(Object.assign({}, base, { heart: 'yes', joints: 'yes', pregnancy: 'yes' }), TODAY);
+      expect(r.limits.lowImpact).toBeFalsy();
+      expect(r.limits.noWeightLoss).toBeFalsy();
     });
     it('обязательные ответы раздела', () => {
-      const sec = F.SECTIONS.find((s) => s.key === 'health');
-      expect(F.missing(sec, { sex: 'm' }).length).toBe(7);
+      const sec = F.SECTIONS.find((s) => s.key === 'lifestyle');
+      expect(F.missing(sec, { sex: 'm' }).length).toBe(4);
       expect(F.missing(sec, Object.assign({ sex: 'm' }, base)).length).toBe(0);
-      expect(F.missing(sec, { sex: 'f', heart: 'no' }).some((x) => /Беременность/.test(x))).toBeTruthy();
     });
   });
 
@@ -133,16 +130,12 @@
       expect(r.blocked).toBeTruthy();
       expect(r.items[0].key).toBe('target_bmi');
     });
-    it('снижение веса при недоборе массы / беременности недоступно', () => {
+    it('снижение веса при недоборе массы недоступно', () => {
       expect(chk('weight_loss', { start_value: 52, target_value: 50 }, { weight_kg: 52 }).blocked).toBeTruthy();
-      expect(chk('weight_loss', { start_value: 80, target_value: 70 }, { sex: 'f', pregnancy: 'yes' }).blocked).toBeTruthy();
     });
-    it('высокий вес и низкая подготовка: предупреждение о темпе и необходимость врача при сердечных симптомах', () => {
+    it('высокий вес и низкая подготовка: предупреждение о темпе', () => {
       const r = chk('weight_loss', { start_value: 125, target_value: 95, deadline: '2027-01-15' }, { weight_kg: 125, regular: 'none', last: 'more', run: 'cant', experience: 'never', pushups: 0, squats: 5, plank_sec: 10 }, { weight: 125 });
       expect(r.items.some((i) => i.key === 'pace_unfit' || i.key === 'pace_warn' || i.key === 'pace_danger')).toBeTruthy();
-      const m = chk('weight_loss', { start_value: 90, target_value: 85 }, { heart: 'yes' });
-      expect(m.items[0].key).toBe('medical');
-      expect(m.needsConfirm).toBeTruthy();
     });
     it('силовая цель: слишком быстрая прибавка и непосильное отношение к весу тела', () => {
       const fast = chk('strength_lift', { exercise_key: 'bench_bb', start_value: 60, target_value: 100, deadline: '2026-12-15' });
