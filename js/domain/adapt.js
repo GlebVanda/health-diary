@@ -51,6 +51,20 @@
       }
     }
 
+    // 1б. Ощущения от тренировок (из режима «Начать тренировку»): две подряд тяжёлые → следующая неделя легче на 15%;
+    //     две подряд лёгкие → небольшой рост длительности. Правила не дублируют облегчение по самочувствию.
+    const felt = done.filter((l) => l.feel);
+    if (felt.length >= 2) {
+      const [x, y] = felt.slice(-2);
+      const hardish = (f) => f === 'hard' || f === 'fail';
+      if (hardish(x.feel) && hardish(y.feel) && y.date >= recentFrom && !out.some((o) => o.type === 'lighten')) {
+        push({ rule: 'feel_hard', key: 'feel_hard:' + y.id, type: 'lighten', factor: 0.85, ...nextWeek, reason: 'Неделя облегчена на 15%: две тренировки подряд прошли тяжело' });
+      }
+      if (x.feel === 'easy' && y.feel === 'easy' && y.date >= recentFrom && !out.some((o) => o.type === 'lighten')) {
+        push({ rule: 'feel_easy', key: 'feel_easy:' + y.id, type: 'boost', plus_min: 5, plus_kg: 0, ...nextWeek, reason: 'Нагрузка немного повышена (+5 мин): две тренировки подряд прошли легко' });
+      }
+    }
+
     // 2. Самочувствие ≥ 8 три раза подряд и цель отстаёт → рост на верхней границе
     if (rated.length >= 3 && input.goalPace === 'behind') {
       const last3 = rated.slice(-3);

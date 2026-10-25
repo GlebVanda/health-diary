@@ -19,7 +19,6 @@
     best_time_min: 90,
     experience: '6to24m',
     lifts: { squat_bb: 45, bench_bb: 30, lat_pulldown: 30, bulgarian_db: 10, db_shoulder_press: 6 },
-    heart: 'no', chest_pain: 'no', dizzy: 'no', bp: 'no', diabetes: 'no', joints: 'no', surgery: 'no', pregnancy: 'no',
   };
 
   const DASHA_PREFS = {
@@ -75,7 +74,6 @@
     squats: 25,
     plank_sec: 60,
     lifts: { squat_bb: 70, bench_bb: 60 },
-    heart: 'no', chest_pain: 'no', dizzy: 'no', bp: 'no', diabetes: 'no', joints: 'no', surgery: 'no',
   };
 
   function seed() {

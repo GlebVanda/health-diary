@@ -441,7 +441,7 @@
 
     // Низкая ударная нагрузка по здоровью: вне подготовки к забегу бег заменяем ходьбой и велотренажёром
     const gentleRun = !!limits.lowImpact && !isRace;
-    if (limits.lowImpact && isRace) warnings.push('Ударная нагрузка бега ограничена вашими ответами анкеты: начните с ходьбы и бег-ходьбы и посоветуйтесь с врачом.');
+    if (limits.lowImpact && isRace) warnings.push('Ударная нагрузка бега ограничена вашими ответами анкеты: начните с ходьбы и бег-ходьбы.');
     const relief = !!preferences.relief;
     const treadmillIncline = equipment.includes('treadmill_incline');
     const mountain = isRace && isMountain(params);

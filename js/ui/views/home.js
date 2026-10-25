@@ -79,7 +79,8 @@
   }
 
   function todayCard(ctx, week) {
-    const sessions = HD.svc.sessionsForDate(ctx, ctx.today);
+    // Сегодняшние тренировки и вчерашние невыполненные (их можно сделать сегодня)
+    const sessions = HD.svc.sessionsForDate(ctx, ctx.today).concat(HD.svc.workout.startable(ctx).filter((x) => x.overdue).map((x) => x.session));
     const unplanned = ctx.logs.filter((l) => l.date === ctx.today && !l.planned_session_id && l.done);
     const food = ctx.foodByDate.get(ctx.today);
     const norm = week && week.hasTarget ? week.dayNorm : null;
@@ -88,10 +89,20 @@
           .map((s) => {
             const log = HD.svc.logFor(ctx, s.id);
             const done = log && log.done;
+            const can = HD.svc.workout.isStartable(ctx, s);
+            const running = !log && !!HD.svc.workout.loadDraft(s.id);
+            const overdue = s.date !== ctx.today;
+            const btn = done
+              ? `<a class="btn small" href="#/workout/${s.id}">Готово ✓</a>`
+              : log
+                ? `<a class="btn small" href="#/workout/${s.id}">Пропущена</a>`
+                : can
+                  ? `<a class="btn small primary" href="#/workout/${s.id}">${running ? 'Продолжить' : 'Начать'}</a>`
+                  : `<a class="btn small" href="#/training/s/${s.id}">Отметить</a>`;
             return `<div class="session ${done ? 'done' : ''}"><div class="kind ${s.kind}">${ui.kindIcon(s.kind)}</div>
-              <div class="grow"><b>${esc(s.title)}</b>${s.is_deload ? ' <span class="badge info">разгрузка</span>' : ''}
+              <div class="grow"><b>${esc(s.title)}</b>${s.is_deload ? ' <span class="badge info">разгрузка</span>' : ''}${overdue && !log ? ' <span class="badge warn">со вчера</span>' : ''}
               <div class="small muted">${s.effective_duration ? s.effective_duration + ' мин' : ''}${s.target.format_label ? ' · ' + esc(s.target.format_label) : ''}</div></div>
-              <a class="btn small ${done ? '' : 'primary'}" href="#/training/s/${s.id}">${done ? 'Готово ✓' : log ? 'Не выполнено' : 'Отметить'}</a></div>`;
+              ${btn}</div>`;
           })
           .join('<div style="height:10px"></div>')
       : `<div class="session"><div class="kind other">${ui.icon('check')}</div><div class="grow"><b>День отдыха</b><div class="small muted">${unplanned.length ? 'Отмечено: ' + unplanned.map((u) => esc(u.title || 'активность')).join(', ') : 'Можно добавить внеплановую активность'}</div></div><a class="btn small" href="#/training/log">+ Активность</a></div>`;

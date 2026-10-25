@@ -116,28 +116,35 @@
     return ctx.logs.find((l) => l.planned_session_id === sessionId) || null;
   }
 
-  // Подсказка по весам на сегодня: + 2,5 кг штанга / + 1 кг гантели за каждую прошлую такую же
-  // тренировку с самочувствием ≥ 6 (разгрузочные не считаются).
+  // История упражнения из тренировок, выполненных через «Начать тренировку» (от новых к старым)
+  function exerciseHistory(ctx, key, exceptSessionId) {
+    const out = [];
+    for (const l of ctx.logs.slice().reverse()) {
+      if (!l.done || !l.exercises || l.planned_session_id === exceptSessionId) continue;
+      const e = l.exercises.find((x) => x.exercise_key === key && x.done);
+      if (e) out.push({ weight: e.weight_kg == null ? null : Number(e.weight_kg), feel: e.feel || 'ok', date: l.date });
+    }
+    return out;
+  }
+
+  // Вес для каждого упражнения: по ощущениям из прошлых тренировок (см. domain/progress.js).
+  // Если упражнение раньше отмечали только вручную, берётся «рабочий вес в целевом упражнении» и самочувствие.
   function suggestedWeights(ctx, session) {
     if (session.kind !== 'strength') return session.target.exercises || [];
-    const sameTemplate = ctx.sessions.filter((s) => s.kind === 'strength' && s.target.template === session.target.template && s.date < session.date && !s.is_deload);
-    const goodCount = sameTemplate.filter((s) => {
-      const l = logFor(ctx, s.id);
-      return l && l.done && l.wellbeing != null && l.wellbeing >= 6;
-    }).length;
     const keyLift = ctx.main && ctx.main.type === 'strength_lift' ? HD.goals.versionAt(ctx.versions.get(ctx.main.id), ctx.today).params : null;
     return (session.target.exercises || []).map((e) => {
       const ex = HD.exerciseByKey(e.exercise_key);
-      if (e.weight_kg == null || !ex) return e;
-      if (keyLift && keyLift.exercise_key === e.exercise_key) {
-        const last = ctx.logs.filter((l) => l.key_lift_kg != null && l.date < session.date).pop();
-        if (last) return Object.assign({}, e, { weight_kg: Number(last.key_lift_kg) + (last.wellbeing >= 6 ? 2.5 : 0) });
+      let history = exerciseHistory(ctx, e.exercise_key, session.id);
+      if (!history.length && keyLift && keyLift.exercise_key === e.exercise_key) {
+        history = ctx.logs
+          .filter((l) => l.done && l.key_lift_kg != null && l.planned_session_id !== session.id)
+          .reverse()
+          .map((l) => ({ weight: Number(l.key_lift_kg), feel: l.wellbeing >= 8 ? 'easy' : l.wellbeing >= 6 || l.wellbeing == null ? 'ok' : 'hard', date: l.date }));
       }
-      const inc = ex.equipment.includes('dumbbells') ? 1 : ex.equipment.includes('bodyweight') ? 0 : 2.5;
-      const extra = session.is_deload ? Math.max(0, goodCount - 1) * inc : goodCount * inc;
-      return Object.assign({}, e, { weight_kg: e.weight_kg + extra });
+      const sug = HD.progress.next(e.weight_kg, history, { step: HD.progress.stepFor(ex), deload: !!session.is_deload });
+      return Object.assign({}, e, { weight_kg: sug.weight, suggest: sug });
     });
   }
 
-  Object.assign(HD.svc, { ctx: build, effective, age, sessionsForDate, logFor, suggestedWeights, byDate });
+  Object.assign(HD.svc, { ctx: build, effective, age, sessionsForDate, logFor, suggestedWeights, exerciseHistory, byDate });
 })(window.HD);

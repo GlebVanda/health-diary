@@ -92,7 +92,7 @@
     ${r.flags.length
       ? `<section class="stack" style="margin-top:12px">${r.flags.map((f) => `<div class="notice ${SEV[f.severity] === 'danger' ? 'danger' : SEV[f.severity] === 'warn' ? 'warn' : ''}">${esc(f.text)}</div>`).join('')}</section>`
       : '<div class="notice good" style="margin-top:12px">Ограничений по здоровью не выявлено.</div>'}
-    <div class="tiny muted" style="margin:10px 2px">Это оценка по вашим ответам, а не медицинское заключение. План учитывает её автоматически; изменить можно, пройдя анкету заново.</div>`;
+    <div class="tiny muted" style="margin:10px 2px">План учитывает эту оценку автоматически; изменить её можно, пройдя анкету заново (Профиль → Оценка подготовки).</div>`;
   }
 
   // Пока показан результат, экран остаётся открытым, даже если следующий шаг настройки уже доступен
