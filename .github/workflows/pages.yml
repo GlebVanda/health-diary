@@ -1,0 +1,52 @@
+name: Выкладка на Pages
+
+# Рабочий адрес: https://glebvanda.github.io/health-diary/
+# Включить один раз: Settings → Pages → Build and deployment → Source: GitHub Actions.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Одновременно идёт одна выкладка; новая ждёт предыдущую
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Браузерные тесты (безголовый Chrome)
+        run: bash scripts/run-tests.sh
+
+  deploy:
+    needs: tests
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Собрать сайт (только файлы приложения)
+        run: |
+          mkdir -p _site
+          rsync -a \
+            --exclude '.git' --exclude '.github' --exclude '_site' \
+            --exclude 'tests' --exclude 'docs' --exclude 'scripts' --exclude 'supabase' \
+            --exclude '*.md' --exclude 'start.cmd' --exclude '.gitignore' \
+            ./ _site/
+          touch _site/.nojekyll
+          ls -R _site | head -40
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

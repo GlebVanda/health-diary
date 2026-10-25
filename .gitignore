@@ -1,0 +1,10 @@
+# Личные файлы Excel не должны попадать в репозиторий
+*.xlsx
+# Локальные настройки и служебное
+.claude/
+.vercel/
+.env
+.env.*
+*.local
+Thumbs.db
+.DS_Store

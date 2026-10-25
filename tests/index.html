@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Тесты</title>
+    <style>
+      :root { --bg: #fff; --text: #17201c; --ok: #2e7d32; --fail: #b3261e; --muted: #5d6b65; color-scheme: light; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #0f1412; --text: #e6ece9; --ok: #7ccf80; --fail: #f2867d; --muted: #97a59f; color-scheme: dark; } }
+      body { background: var(--bg); color: var(--text); font: 14px/1.5 system-ui, sans-serif; margin: 0 auto; padding: 16px; max-width: 900px; }
+      h1 { font-size: 20px; } h2 { font-size: 15px; margin: 18px 0 6px; }
+      ul { margin: 0; padding-left: 18px; list-style: none; }
+      .ok { color: var(--ok); } .fail { color: var(--fail); font-weight: 600; }
+      .err { color: var(--muted); font-weight: 400; font-size: 13px; }
+      .summary { padding: 10px 12px; border-radius: 10px; font-weight: 700; }
+      .summary.good { background: color-mix(in srgb, var(--ok) 15%, transparent); }
+      .summary.bad { background: color-mix(in srgb, var(--fail) 15%, transparent); }
+    </style>
+  </head>
+  <body>
+    <h1>Тесты расчётной логики</h1>
+    <div id="out">Выполняю…</div>
+
+    <script src="../js/core/ns.js"></script>
+    <script src="../js/core/dates.js"></script>
+    <script src="../js/core/sha256.js"></script>
+    <script src="../js/domain/exercises.js"></script>
+    <script src="../js/domain/fitness.js"></script>
+    <script src="../js/domain/nutrition.js"></script>
+    <script src="../js/domain/budget.js"></script>
+    <script src="../js/domain/goals/registry.js"></script>
+    <script src="../js/domain/goals/weight.js"></script>
+    <script src="../js/domain/goals/race.js"></script>
+    <script src="../js/domain/goals/strength.js"></script>
+    <script src="../js/domain/goals/consistency.js"></script>
+    <script src="../js/domain/goals/measurement.js"></script>
+    <script src="../js/domain/goals/run-distance.js"></script>
+    <script src="../js/domain/goals/scenario.js"></script>
+    <script src="../js/domain/goals/safety.js"></script>
+    <script src="../js/domain/plan.js"></script>
+    <script src="../js/domain/adapt.js"></script>
+    <script src="../js/domain/recommendations.js"></script>
+    <script src="../js/domain/aggregate.js"></script>
+    <script src="../js/domain/upcoming.js"></script>
+    <script src="../js/ai/provider.js"></script>
+    <script src="../js/data/db.js"></script>
+    <script src="../js/data/seed.js"></script>
+    <script src="../js/services/context.js"></script>
+    <script src="../js/services/nutrition-svc.js"></script>
+    <script src="../js/services/goals-svc.js"></script>
+    <script src="../js/services/plan-svc.js"></script>
+    <script src="../js/services/photos-svc.js"></script>
+    <script src="../js/services/onboarding-svc.js"></script>
+    <script src="../js/sync/supabase.js"></script>
+    <script src="../js/sync/sync.js"></script>
+    <script src="../js/import/xlsx.js"></script>
+    <script src="../js/import/xlsx-import.js"></script>
+
+    <script src="runner.js"></script>
+    <script src="domain.test.js"></script>
+    <script src="plan.test.js"></script>
+    <script src="services.test.js"></script>
+    <script src="import.test.js"></script>
+    <script src="photos.test.js"></script>
+    <script src="onboarding.test.js"></script>
+    <script src="sync.test.js"></script>
+    <script>
+      runTests();
+    </script>
+  </body>
+</html>
