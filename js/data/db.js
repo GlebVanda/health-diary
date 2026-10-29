@@ -19,6 +19,8 @@
     'plan_changes',
     'body_photos',
     'assessments',
+    'streaks',
+    'streak_days',
   ];
   const DB_NAME = 'health-diary';
   const STORE = 'kv';
@@ -37,6 +39,7 @@
   const NATURAL = {
     food_days: (r) => r.profile_id + ':' + r.date,
     body_measurements: (r) => r.profile_id + ':' + r.date,
+    streak_days: (r) => r.streak_id + ':' + r.date,
   };
   const newId = (table, row) => row.id || (NATURAL[table] && row.profile_id && row.date ? NATURAL[table](row) : HD.util.uid());
 

@@ -21,6 +21,7 @@
       ['#/goals', 'target', 'Цели', ctx.main ? ctx.main.title + (ctx.secondaries.length ? ` + ещё ${ctx.secondaries.length}` : '') : 'не заданы'],
       ['#/wizard', 'list', 'Расписание и оборудование', ctx.prefs ? 'обновлено ' + D.short(ctx.prefs.valid_from, true) : 'не заполнено'],
       ['#/body', 'scale', 'Тело и фото', ctx.currentWeight ? num(ctx.currentWeight, 1) + ' кг' : 'вес, объёмы, фото'],
+      ['#/streak', 'run', 'Серия бега 22 дня', HD.svc.streak.active(ctx.profileId) ? 'чек-ин и результаты' : 'подключить: 1–22 ноября'],
       ['#/events', 'cal', 'События', 'старты, чек-апы'],
       ['#/import', 'upload', 'Импорт из Excel', 'калории, тренировки и вес из таблицы'],
       ['#/settings', 'cog', 'Настройки', 'тема, PIN, ИИ, копия данных'],

@@ -194,6 +194,7 @@
       const onboarding = !ctx.profile.birth_date || !ctx.profile.height_cm ? `<div class="notice warn">Заполните возраст и рост в <a href="#/profile/me">профиле</a> — без них норма калорий не считается автоматически.</div>` : '';
       return `${onboarding ? `<div style="margin-bottom:12px">${onboarding}</div>` : ''}<div class="home">
         ${goalHeader(ctx, ov)}
+        ${ui.streakCard(ctx)}
         ${todayCard(ctx, week)}
         ${weekCard(ctx, week)}
         ${widgetCard(ctx, ov, period)}
