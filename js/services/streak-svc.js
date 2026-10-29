@@ -67,7 +67,14 @@
       sleep_h: num(v.sleep_h),
       at: new Date().toISOString(),
     };
-    return write(profileId, st, date, { checkin: c });
+    const row = write(profileId, st, date, { checkin: c });
+    // Утренний вес уходит в замеры тела (как быстрый ввод на главной) и пересчитывает норму питания
+    const w = num(v.weight_kg);
+    if (w != null && w >= 30 && w <= 300) {
+      db.upsert('body_measurements', (m) => m.profile_id === profileId && m.date === date, { profile_id: profileId, date, weight_kg: w });
+      if (HD.svc.nutrition && HD.svc.nutrition.recalc) HD.svc.nutrition.recalc(profileId, 'Новое взвешивание');
+    }
+    return row;
   }
 
   function clearCheckin(profileId, st, date) {

@@ -246,6 +246,16 @@
       expect(m.broken).toBe('2026-11-02');
       expect(m.streakLen).toBe(1);
     });
+    it('вес из чек-ина попадает в замеры тела', async () => {
+      const ctx = await fresh('2026-11-01');
+      const st = HD.svc.streak.connect(ctx.profileId);
+      HD.svc.streak.saveCheckin(ctx.profileId, st, '2026-11-01', { pain: '0', weight_kg: '96,4' });
+      const m = HD.db.forProfile('body_measurements', ctx.profileId).find((x) => x.date === '2026-11-01');
+      expect(m.weight_kg).toBe(96.4);
+      // нелепое значение не записывается
+      HD.svc.streak.saveCheckin(ctx.profileId, st, '2026-11-02', { pain: '0', weight_kg: '9' });
+      expect(HD.db.forProfile('body_measurements', ctx.profileId).some((x) => x.date === '2026-11-02')).toBeFalsy();
+    });
     it('данные серии синхронизируются: таблицы включены, id дня естественный', async () => {
       const ctx = await fresh('2026-11-01');
       const st = HD.svc.streak.connect(ctx.profileId);

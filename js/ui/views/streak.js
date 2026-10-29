@@ -41,7 +41,7 @@
     </section>`;
   }
 
-  function checkinForm(d, c) {
+  function checkinForm(d, c, weight) {
     const v = c || {};
     const chk = (name, label) => `<label class="check"><input type="checkbox" name="${name}" ${v[name] ? 'checked' : ''}><span>${label}</span></label>`;
     return `<form class="stack" data-form="checkin">
@@ -56,6 +56,7 @@
         ${ui.field('Пульс покоя', ui.numInput('rest_hr', v.rest_hr, 'уд/мин'))}
         ${ui.field('Сон', ui.numInput('sleep_h', v.sleep_h, 'ч'))}
       </div>
+      ${ui.field('Вес утром (натощак)', ui.numInput('weight_kg', weight, 'кг'))}
       <button class="btn primary block">${c ? 'Обновить чек-ин' : 'Сохранить чек-ин'}</button>
     </form>`;
   }
@@ -77,7 +78,9 @@
     </form>`;
   }
 
-  function dayCard(m, d, today) {
+  function dayCard(m, d, today, ctx) {
+    const meas = ctx.measurements.find((x) => x.date === d.date && x.weight_kg != null);
+    const weight = meas ? meas.weight_kg : null;
     const future = d.date > today;
     const p = d.plan;
     const t = d.target;
@@ -92,7 +95,7 @@
           ? `<div>
               <h3>Утренний чек-ин</h3>
               ${d.checkin && lt ? `<div class="row" style="gap:8px;margin:6px 0">${lightDot(d.light)}<b>${lt[0]} день</b><span class="small muted">${esc(d.reasons.join('; ') || 'без жалоб')}</span></div>` : ''}
-              ${d.checkin ? `<details class="small"><summary>Изменить ответы</summary>${checkinForm(d, d.checkin)}</details><button class="btn ghost small" data-act="clear-checkin">Удалить чек-ин</button>` : checkinForm(d, null)}
+              ${d.checkin ? `<details class="small"><summary>Изменить ответы</summary>${checkinForm(d, d.checkin, weight)}</details><button class="btn ghost small" data-act="clear-checkin">Удалить чек-ин</button>` : checkinForm(d, null, weight)}
             </div>`
           : ''
       }
@@ -161,7 +164,7 @@
       if (sel < first) sel = first;
       if (sel > last) sel = last;
       const d = m.days.find((x) => x.date === sel);
-      return `<div class="stack">${header(m, d, today)}${dayCard(m, d, today)}${calendar(m, sel, today)}${checkpointsCard(m)}${rules()}<button class="btn ghost danger block" data-act="disconnect">Отключить серию</button></div>`;
+      return `<div class="stack">${header(m, d, today)}${dayCard(m, d, today, ctx)}${calendar(m, sel, today)}${checkpointsCard(m)}${rules()}<button class="btn ghost danger block" data-act="disconnect">Отключить серию</button></div>`;
     },
     bind(root, ctx, r) {
       const conn = root.querySelector('[data-act="connect"]');
@@ -187,7 +190,7 @@
           SV().saveCheckin(ctx.profileId, st, sel, ui.formData(f));
           const d = SV().model(ctx).days.find((x) => x.date === sel);
           const lt = LIGHT[d.light];
-          ui.toast(`${lt[0]} день. Цель: ${d.target.mode === 'stop' ? 'серия остановлена' : kmText(d.target.km)}`);
+          ui.toast(`${lt[0]} день. Цель: ${d.target.mode === 'stop' ? 'серия остановлена' : kmText(d.target.km)}${ui.numOrNull(ui.formData(f).weight_kg) ? '. Вес записан' : ''}`);
           ui.render();
         };
       });
