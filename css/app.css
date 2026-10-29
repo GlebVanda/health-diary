@@ -570,3 +570,13 @@ a.type-card:active, a.type-card:hover { border-color: var(--ink); }
   display: flex; gap: 10px; margin-top: 16px; padding: 10px; border-radius: 999px; background: var(--bg); border: 2px solid var(--ink);
 }
 .wk-bar .btn { min-height: 44px; }
+
+/* Серия бега: светофор и календарь */
+.lt-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--surface-2); border: 1px solid var(--border, #444); }
+.lt-dot.green { background: #2fbf5b; border-color: #2fbf5b; }
+.lt-dot.yellow { background: #f2c230; border-color: #f2c230; }
+.lt-dot.red { background: #e5484d; border-color: #e5484d; }
+.st-cal li.sel { background: var(--accent-soft); }
+.st-cal li a { color: inherit; text-decoration: none; padding: 2px 0; }
+.st-n { width: 22px; text-align: center; color: var(--muted); font-size: 13px; }
+.chip input[hidden] { display: none; }

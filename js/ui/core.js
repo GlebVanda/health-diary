@@ -161,7 +161,7 @@
     ['training', 'Тренировки', 'train'],
     ['profile', 'Профиль', 'user'],
   ];
-  const SECTION = { workout: 'training', dynamics: 'home', body: 'profile', goals: 'profile', onboard: 'profile', wizard: 'profile', import: 'profile', settings: 'profile', events: 'profile' };
+  const SECTION = { workout: 'training', streak: 'home', dynamics: 'home', body: 'profile', goals: 'profile', onboard: 'profile', wizard: 'profile', import: 'profile', settings: 'profile', events: 'profile' };
 
   // Шаги первичной настройки и разрешённые на них экраны
   const ONB_STEPS = [
